@@ -1,0 +1,24 @@
+:: ============================================================
+:: Rime 小狼毫 —— 新电脑建软链接命令
+:: ------------------------------------------------------------
+:: 【推荐】直接右键运行同目录的「setup-symlinks.cmd」（以管理员身份），
+::        它会自动完成下面全部操作，并可重复运行。
+:: ------------------------------------------------------------
+:: 用途：把 git 包里的词库源、候选词屏蔽黑名单、反引号英文 translator 映射到 Rime 部署目录
+:: 执行：以【管理员】身份打开终端（Win+X → 终端(管理员)），逐行运行
+:: 前提：若目标文件已存在，先删除（否则 mklink 报"文件已存在"）
+:: 注意：仓库路径按实际位置填（例如 <本仓库根目录>）
+:: 变更：2026-10-07 词库源从外部目录迁至本仓库
+::       本仓库由 rime-wubi86 方案整理而来（公开命名为 rime-wubi-multimode）
+::       2026-10-17 新增反引号引导英文 translator（lua/english.lua）
+:: ============================================================
+
+del "%AppData%\Rime\wubi86_jidian_user.dict.yaml"
+cmd /c mklink "%AppData%\Rime\wubi86_jidian_user.dict.yaml" "<本仓库根目录>\dict\wubi86_jidian_user.dict.yaml"
+
+:: 候选词屏蔽黑名单（lua 过滤器）
+if not exist "%AppData%\Rime\lua" mkdir "%AppData%\Rime\lua"
+cmd /c mklink "%AppData%\Rime\lua\cand_blocker.lua" "<本仓库根目录>\lua\cand_blocker.lua"
+
+:: 反引号引导英文（lua_translator@*english）
+cmd /c mklink "%AppData%\Rime\lua\english.lua" "<本仓库根目录>\lua\english.lua"

@@ -1,0 +1,135 @@
+# Rime schema settings
+# encoding: utf-8
+#
+# 极点五笔86（z 引导拼音版）
+#
+#   五笔为主       四码顶字上屏完整保留
+#   z 引导拼音     不会拆的字打 z + 拼音救场，可打任意长度、零截断
+#                  拼音候选右侧标注该字的五笔编码，边打边学
+#   简繁切换       zh_trad 开关
+#
+# 关键设计（为什么拼音必须用 z 引导）：
+#   librime 的四码上屏（AutoSelectAtMaxCodeLength）只对 table 类候选生效。
+#   五笔走 table_translator（table 型候选）→ 受四码上屏控制；
+#   拼音走 script_translator（phrase 型候选）→ 天然免疫，可自由输入任意长度。
+#   五笔86 码表不含任何 z 开头的编码，所以 z 是零冲突的拼音引导键。
+#   若不做 z 引导（无前缀混输），第 4 个字母落下就会把正在打的拼音顶掉，
+#   实测高频拼音词约 13-15% 会中招。
+
+schema:
+  schema_id: wubi86_jidian
+  name: "极点五笔86"
+  version: "1.1"
+  author:
+    - 创始人 王永民先生
+    - 码表 KyleBing
+  description: |
+    五笔86 极点码表。z 引导拼音辅助并标注五笔编码。
+  dependencies:
+    - pinyin_simp
+
+switches:
+  - name: ascii_mode
+    reset: 0
+    states: [ 中, En ]
+  - name: zh_trad
+    reset: 0
+    states: [ 简体, 繁体 ]
+  - name: full_shape
+    states: [ 半角, 全角 ]
+  - name: extended_charset
+    states: [ 常用, 扩展 ]
+  - name: ascii_punct
+    states: [ 。，, ．， ]
+
+engine:
+  processors:
+    - ascii_composer
+    - recognizer
+    - key_binder
+    - speller
+    - punctuator
+    - selector
+    - navigator
+    - express_editor
+  segmentors:
+    - ascii_segmentor
+    - matcher
+    - affix_segmentor@pinyin_hint
+    - affix_segmentor@english
+    - abc_segmentor
+    - punct_segmentor
+    - fallback_segmentor
+  translators:
+    - punct_translator
+    - lua_translator@*english
+    - table_translator
+    - script_translator@pinyin_hint
+  filters:
+    - lua_filter@*cand_blocker
+    - reverse_lookup_filter@wubi_code_hint
+    - simplifier@tradition
+    - uniquifier
+
+speller:
+  alphabet: zyxwvutsrqponmlkjihgfedcba
+  max_code_length: 4                    # 四码上屏：输入超过 4 码顶字上屏
+  auto_select: true                     # 自动上屏（仅对 table 类候选生效，拼音免疫）
+  auto_select_unique_candidate: true    # 四码唯一无重码时自动上屏
+
+translator:
+  dictionary: wubi86_jidian
+  enable_charset_filter: true
+  enable_completion: true               # 不足四码也出候选，并显示完整编码提示
+  enable_sentence: false
+  enable_user_dict: false
+  enable_encoder: true
+  encode_commit_history: false
+  max_phrase_length: 10
+  user_dict: user
+  db_class: tabledb
+  disable_user_dict_for_patterns:
+    - "^z.*$"
+
+# ---------- z 引导拼音（独立分段 + script_translator，免疫四码上屏）----------
+pinyin_hint:
+  tag: pinyin_hint
+  dictionary: pinyin_simp
+  prefix: "z"                           # 五笔码表无 z 开头编码，零冲突
+  tips: 〔拼音〕
+  enable_completion: true
+  enable_user_dict: false
+  initial_quality: 0.5
+  preedit_format:
+    - xform/([nl])v/$1ü/
+    - xform/([nl])ue/$1üe/
+    - xform/([jqxy])v/$1u/
+
+# ---------- 反引号引导英文（原样回显，空格上屏；与 recognizer.patterns.english 成对）----------
+english:
+  tag: english
+  prefix: "`"
+  tips: 〔英文〕
+
+# ---------- 拼音候选右侧标注该字的五笔编码（只作用于 pinyin_hint 分段）----------
+wubi_code_hint:
+  tags: [ pinyin_hint ]
+  dictionary: wubi86_jidian
+  overwrite_comment: true
+
+# ---------- 简繁 ----------
+tradition:
+  opencc_config: s2hk.json
+  option_name: zh_trad
+
+punctuator:
+  import_preset: default
+key_binder:
+  import_preset: default
+recognizer:
+  import_preset: default
+  patterns:
+    # affix_segmentor 只有在分段已带 pinyin_hint 标签时才会剥前缀，这条必需，不能删
+    pinyin_hint: "^z[a-z]*$"
+    # 反引号引导英文：与 affix_segmentor@english 成对存在，缺一即失效（recognizer 收编反引号进合成）
+    english: "^`.*$"

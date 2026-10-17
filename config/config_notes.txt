@@ -1,0 +1,31 @@
+【新电脑复现 · 配置替换说明】
+
+【素材分工】
+  安装包 + 上游配置包（zip）→ 本地安装素材目录（自行保管，例如 ~\Downloads\rime\）
+      也可自行下载：Weasel 安装包 → https://github.com/rime/weasel/releases
+                    上游配置包 → https://github.com/KyleBing/rime-wubi86-jidian
+  指南 + 配置源 + 词库 + 脚本 → 本仓库根目录 <本仓库根目录>
+      （需先 clone 或拷贝到本机同一位置；否则第 3、4 步没有源）
+
+1. 装好小狼毫 Weasel（安装包自行准备 weasel-0.17.4.0-installer.exe，双击按向导走，
+   用户目录保持默认 %AppData%\Rime）。
+
+2. 解压 rime-wubi86-jidian-master.zip，把里面所有 yaml 等文件复制到 %AppData%\Rime
+   （⚠️ zip 内有顶层目录 rime-wubi86-jidian-master\，注意把里面的文件取出来放进
+   %AppData%\Rime\，别整个目录塞进去，否则 Rime 读不到）
+
+3. 用本文件夹（git 包 config\）下的这些文件，覆盖到 %AppData%\Rime：
+     wubi86_jidian.schema.yaml      （主方案：z 引导拼音 + 四码顶字上屏）
+     default.custom.yaml            （方案列表：只启用 wubi86_jidian）
+     weasel.custom.yaml             （外观）
+
+4. 【必须做】建立软链接，否则词库与候选词屏蔽功能都不生效：
+   以管理员身份运行
+     <本仓库根目录>\dict\setup-symlinks.cmd
+   它会建两条软链接（词库 + lua 屏蔽黑名单），并自动核对结果。
+   ⚠️ 先建 lua 链接再部署，否则输入法一个字都打不出来。
+
+5. 右键任务栏右下角小狼毫托盘图标 → 重新部署
+
+完整步骤、自检清单与排障见 git 包根目录：
+  20261008=五笔：Rime小狼毫（z引导拼音·四码顶字上屏）AI复现与维护指南.md
